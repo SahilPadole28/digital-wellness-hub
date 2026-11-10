@@ -175,4 +175,4 @@ See `/docs/DECISIONS.md` for all major design and technical decisions with reaso
 ## AI assistance
 
 This codebase was scaffolded with AI assistance. See `/docs/AI_ACKNOWLEDGEMENT.md` and the About page for full details.
-
+This is the end of the project.
