@@ -123,3 +123,56 @@
 **Decision:** Maintain a decisions log per prompt requirement (section 11, step 2)
 **Reasoning:** The prompt requires all decisions to be recorded with reasoning. This file is that record.
 
+---
+
+## D12 — Empirical Student Research Ingestion & Anonymization
+**Date:** 2026-11-16
+**Decision:** Ingest all 12 authentic student responses from `Digital Wellness and Website Testing Feedback (Responses).xlsx` directly into `docs/student_feedback_responses.csv` and a typed TypeScript file `src/data/studentResearch.ts`, creating a dedicated `/research` page.
+**Reasoning:**
+- Fulfills mandatory requirements R1 ("Define a student audience and its main needs via discussion/feedback activity") and R9/R10 without fabricating data.
+- Anonymizes participants strictly as Student 1 through Student 12 to guarantee academic privacy.
+- Accurately computes sample statistics (e.g. 41.7% with >10h screen time; 91.7% struggling with screen time; 58.3% first-time tool users).
+- Exposes unvarnished data to students, instructors, and examiners via an interactive public ledger.
+
+---
+
+## D13 — Visual Badges & Presets in Side-by-Side Comparison Matrix
+**Date:** 2026-11-16
+**Decision:** Enhance the `/compare` page with color-coded visual indicator badges (Friction Level, Cost Model, Setup Duration, Privacy Profile) and 4 curated quick comparison presets (*Built-in OS Controls*, *Study Blockers*, *Bedtime Routines*, *Privacy Trio*), plus responsive vertical cards for mobile viewports.
+**Reasoning:**
+- Directly addresses usability feedback from Student 8 ("A cleaner comparison layout, and visual indicators to make it easier to compare different tools") and Student 3 ("A wider variety of tools... more detailed descriptions").
+- Reduces cognitive friction by allowing students to see the trade-offs at a glance rather than wading through dense text tables.
+- Presets provide 1-click entry points into the most common academic dilemmas (e.g. built-in OEM timers vs dedicated focus blockers).
+
+---
+
+## D14 — Habit-Aware Recommendation Wizard with 6-Point Rationale Cards
+**Date:** 2026-11-16
+**Decision:** Upgrade `/find` from a simple category/device filter into an intelligent 3-step decision wizard incorporating daily screen time intensity (<2h, 2–4h, 4–6h, 6–8h, >10h) and intervention preference (Friction/Pause, Strict Blocking, Bedtime Routine, Environment Hygiene). Renders a comprehensive 6-point rationale card per matched tool.
+**Reasoning:**
+- Directly addresses Student 8's feedback ("A personalized recommendation system based on users' screen time habits").
+- Differentiates students with extreme screen time (>10h) who need hard lockouts (LeechBlock NG) or habit interruption (one sec) from students who only need gentle timers.
+- The 6-point rationale card explains: (1) Why selected, (2) Problem addressed, (3) Relevant features, (4) Pricing & inclusions, (5) Trade-offs & limitations, and (6) Alternative considerations, fulfilling R7's mandate to "help students make informed choices rather than simply display a list of links".
+
+---
+
+## D15 — Interactive Digital Wellness Q&A (FAQ) Component
+**Date:** 2026-11-16
+**Decision:** Design and embed an interactive accordion Q&A answering the top 8 recurring student dilemmas across academic digital wellness.
+**Reasoning:**
+- Directly fulfills Student 6's feedback ("Give option for Q&A and make it more easier to understand").
+- Answers practical questions that students face daily (e.g. "Why can I easily bypass built-in Screen Time limits?", "Does blue light actually ruin sleep compared to stressful feeds?", "How do I whitelist family emergency calls during study sessions?").
+- Bridges academic theory (habit inversion, Patanjali's Chitta Bhumi, attention residue) with practical daily student tactics.
+
+---
+
+## D16 — 37-Slot Privacy-Safe Screenshot & Diagram Architecture
+**Date:** 2026-11-16
+**Decision:** Resolve all 37 screenshot slots across the 3 setup guides using: (1) 3 headless Chromium captures of public store/settings pages, (2) 6 official developer store previews from Mozilla CDN, and (3) 28 original, high-resolution illustrative workflow diagrams clearly labelled `"ILLUSTRATIVE DIAGRAM — NOT A PRODUCT SCREENSHOT"`. Cataloged in `src/data/assetCredits.ts` and `docs/ASSET_CREDITS.md` with visible captions.
+**Reasoning:**
+- Satisfies R5 (all setup guides complete with visual reference points) while strictly adhering to the honesty rules prohibiting fake or fabricated product UI screenshots.
+- Zero private or identifying student data in any visual asset.
+- Every borrowed image carries a visible attribution caption with source name, URL, and date accessed.
+- Every original diagram provides clear pedagogical schematic value without pretending to be vendor software.
+
+

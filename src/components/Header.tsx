@@ -8,6 +8,7 @@ const navItems = [
   { to: '/compare', label: 'Compare' },
   { to: '/guides', label: 'Guides' },
   { to: '/learn', label: 'Learn' },
+  { to: '/research', label: 'Research' },
   { to: '/about', label: 'About' },
 ]
 

@@ -5,6 +5,8 @@ import { resources } from '../data/resources'
 import { concepts } from '../data/concepts'
 import { guides } from '../data/guides'
 import { getAssetCredit } from '../data/assetCredits'
+import { studentResponses, habitStatistics, usabilityStatistics, implementedImprovements } from '../data/studentResearch'
+import { comparisonPresets } from '../pages/Compare'
 
 // ── Filter tests ───────────────────────────────────────────
 
@@ -281,6 +283,59 @@ describe('resource data integrity', () => {
       })
     })
     expect(checkedCount).toBe(37)
+  })
+
+  it('studentResearch dataset contains exactly 12 authentic student records (R1, R9, R10)', () => {
+    expect(studentResponses).toHaveLength(12)
+    studentResponses.forEach((resp, idx) => {
+      expect(resp.id).toBe(`Student ${idx + 1}`)
+      expect(typeof resp.dailyDeviceUsage).toBe('string')
+      expect(typeof resp.struggleScreenTime).toBe('string')
+      expect(Array.isArray(resp.mainDistractions)).toBe(true)
+      expect(typeof resp.easyToNavigate).toBe('string')
+      expect(typeof resp.foundUsefulTool).toBe('string')
+      expect(typeof resp.comparisonsUnderstandable).toBe('string')
+      expect(typeof resp.instructionsClear).toBe('string')
+    })
+  })
+
+  it('habitStatistics and usabilityStatistics accurately compute sample distributions (R1, R9)', () => {
+    const over10 = habitStatistics.dailyUsage.find(u => u.label === 'More than 10 hours')
+    expect(over10?.percentage).toBe(41.7)
+
+    const struggleOften = habitStatistics.struggleWithScreenTime.find(s => s.label.includes('Yes'))
+    expect(struggleOften?.percentage).toBe(41.7)
+
+    const noPrior = habitStatistics.previouslyUsedTools.find(p => p.label.includes('No prior'))
+    expect(noPrior?.percentage).toBe(58.3)
+
+    const compClear = usabilityStatistics.comparisonsUnderstandable.find(c => c.label.includes('Yes'))
+    expect(compClear?.percentage).toBe(91.7)
+
+    const guideClear = usabilityStatistics.instructionsClear.find(i => i.label.includes('Yes'))
+    expect(guideClear?.percentage).toBe(83.3)
+  })
+
+  it('implementedImprovements maps feedback to concrete changes (R9, R10)', () => {
+    expect(implementedImprovements.length).toBeGreaterThanOrEqual(6)
+    implementedImprovements.forEach(imp => {
+      expect(typeof imp.id).toBe('string')
+      expect(typeof imp.feedbackSource).toBe('string')
+      expect(typeof imp.studentQuote).toBe('string')
+      expect(typeof imp.changeImplemented).toBe('string')
+      expect(imp.status).toBe('Implemented')
+    })
+  })
+
+  it('comparisonPresets provide 4 quick evaluation lenses', () => {
+    expect(comparisonPresets).toHaveLength(4)
+    comparisonPresets.forEach(p => {
+      expect(p.ids.length).toBeGreaterThanOrEqual(2)
+      p.ids.forEach(id => {
+        const found = resources.find(r => r.id === id)
+        expect(found, `Preset tool id ${id} not found in resources`).toBeDefined()
+      })
+    })
   })
 })
 

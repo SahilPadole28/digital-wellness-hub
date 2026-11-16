@@ -13,6 +13,7 @@ import ConceptDetail from '../pages/ConceptDetail'
 import About from '../pages/About'
 import Privacy from '../pages/Privacy'
 import ProjectEvidence from '../pages/ProjectEvidence'
+import Research from '../pages/Research'
 import NotFound from '../pages/NotFound'
 import { resources } from '../data/resources'
 import { concepts } from '../data/concepts'
@@ -210,6 +211,15 @@ describe('Full Server-Side Rendering of All Pages and States', () => {
       </MemoryRouter>
     )
     expect(evidenceHtml).toContain('Project Evidence')
+
+    const researchHtml = renderToString(
+      <MemoryRouter initialEntries={['/research']}>
+        <Research />
+      </MemoryRouter>
+    )
+    expect(researchHtml).toContain('Student Research &amp; Usability Testing')
+    expect(researchHtml).toContain('Student 1')
+    expect(researchHtml).toContain('Research Methodology')
 
     const notFoundHtml = renderToString(
       <MemoryRouter initialEntries={['/404']}>

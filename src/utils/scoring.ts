@@ -1,22 +1,34 @@
 // ============================================================
-// SCORING UTILITY — Find My Tool wizard
+// SCORING UTILITY — Find My Tool wizard (R7, Section 5)
 // Pure functions: unit-testable, no side effects
+// Enhanced with Student Research findings (N=12 student cohort)
 // ============================================================
 
 import type { Resource, Concern, Platform } from '../data/resources';
+
+export type DailyUsage = 'lt-2h' | '2-4h' | '4-6h' | '6-8h' | 'gt-10h' | '';
+export type InterventionType = 'friction' | 'blocking' | 'scheduling' | 'environment' | '';
+export type StudyRequirement = 'study-sessions' | 'all-day' | 'nighttime' | '';
 
 export interface FinderInputs {
   concern: Concern | '';
   platforms: Platform[];
   budgetFreeOnly: boolean;
   preferOpenSource: boolean;
+  dailyUsage?: DailyUsage;
+  interventionType?: InterventionType;
+  studyRequirement?: StudyRequirement;
 }
 
 export interface ScoredResource {
   resource: Resource;
   score: number;
   whyThisFits: string;
+  problemAddressed: string;
+  relevantFeatures: string[];
+  pricingNote: string;
   tradeoffNote: string;
+  alternativeSuggestion: string;
   excludedReasons: string[];
 }
 
@@ -25,26 +37,79 @@ export interface FinderResult {
   excluded: Array<{ resource: Resource; reasons: string[] }>;
 }
 
-// Weights for scoring
+// Weights for scoring engine
 const WEIGHTS = {
-  concern: 50,         // Primary concern match is most important
-  platform: 'hard',   // Platform is a hard filter (must match)
-  budget: 'hard',     // Budget is a hard filter when free-only requested
-  openSource: 10,     // Soft preference
-  privacyFriendly: 5, // No account required bonus
+  concern: 50,             // Primary concern match is most important
+  dailyUsageFit: 15,       // High usage (>10h) prioritizes high-friction/strict tools
+  interventionFit: 15,     // Friction vs Blocking vs Scheduling vs Environment
+  studyFit: 10,            // Study sessions vs Nighttime vs All-day
+  openSource: 10,          // Soft preference
+  privacyFriendly: 5,      // No account required bonus
 };
 
 function getConcernMatch(resource: Resource, concern: Concern | ''): number {
   if (!concern) return 0;
   if (resource.concerns.includes(concern)) {
-    // Primary concern match — higher score if concern is first in the list
     return resource.concerns[0] === concern ? WEIGHTS.concern : WEIGHTS.concern * 0.7;
   }
   return 0;
 }
 
+function getDailyUsageBonus(resource: Resource, usage?: DailyUsage): number {
+  if (!usage) return 0;
+  // High-intensity users (>10h) need robust friction or strict blocking (Students 3, 7, 9, 12)
+  if (usage === 'gt-10h') {
+    if (['leechblock-ng', 'ios-screen-time', 'android-digital-wellbeing', 'one-sec'].includes(resource.id)) {
+      return WEIGHTS.dailyUsageFit;
+    }
+  }
+  // Moderate-to-heavy (4-8h) need study session structure (Student 8)
+  if (usage === '6-8h' || usage === '4-6h') {
+    if (['forest', 'android-digital-wellbeing', 'ios-screen-time', 'leechblock-ng'].includes(resource.id)) {
+      return WEIGHTS.dailyUsageFit;
+    }
+  }
+  // Light-to-moderate (0-4h) benefit from low-overhead awareness (Students 1, 2, 5, 6)
+  if (usage === '2-4h' || usage === 'lt-2h') {
+    if (['news-feed-eradicator', 'duckduckgo', 'ublock-origin', 'ios-sleep-focus'].includes(resource.id)) {
+      return WEIGHTS.dailyUsageFit;
+    }
+  }
+  return 0;
+}
+
+function getInterventionBonus(resource: Resource, intervention?: InterventionType): number {
+  if (!intervention) return 0;
+  switch (intervention) {
+    case 'friction':
+      return ['one-sec', 'ios-screen-time', 'android-digital-wellbeing'].includes(resource.id) ? WEIGHTS.interventionFit : 0;
+    case 'blocking':
+      return ['leechblock-ng', 'news-feed-eradicator', 'ublock-origin'].includes(resource.id) ? WEIGHTS.interventionFit : 0;
+    case 'scheduling':
+      return ['ios-sleep-focus', 'android-bedtime-mode', 'ios-screen-time', 'leechblock-ng'].includes(resource.id) ? WEIGHTS.interventionFit : 0;
+    case 'environment':
+      return ['flux', 'android-bedtime-mode', 'ios-sleep-focus'].includes(resource.id) ? WEIGHTS.interventionFit : 0;
+    default:
+      return 0;
+  }
+}
+
+function getStudyRequirementBonus(resource: Resource, req?: StudyRequirement): number {
+  if (!req) return 0;
+  switch (req) {
+    case 'study-sessions':
+      return ['forest', 'leechblock-ng', 'news-feed-eradicator', 'android-digital-wellbeing'].includes(resource.id) ? WEIGHTS.studyFit : 0;
+    case 'nighttime':
+      return ['ios-sleep-focus', 'android-bedtime-mode', 'flux'].includes(resource.id) ? WEIGHTS.studyFit : 0;
+    case 'all-day':
+      return ['ios-screen-time', 'android-digital-wellbeing', 'one-sec', 'ublock-origin', 'signal'].includes(resource.id) ? WEIGHTS.studyFit : 0;
+    default:
+      return 0;
+  }
+}
+
 function platformMatches(resource: Resource, platforms: Platform[]): boolean {
-  if (platforms.length === 0) return true; // No filter = all pass
+  if (platforms.length === 0) return true;
   return platforms.some((p) => resource.platforms.includes(p));
 }
 
@@ -66,6 +131,12 @@ function getPrivacyBonus(resource: Resource): number {
 
 function generateWhyThisFits(resource: Resource, inputs: FinderInputs): string {
   const parts: string[] = [];
+
+  if (inputs.dailyUsage === 'gt-10h' && ['leechblock-ng', 'ios-screen-time', 'android-digital-wellbeing', 'one-sec'].includes(resource.id)) {
+    parts.push('Recommended for your heavy screen time (>10 hrs/day) because it provides enforceable friction rather than easily dismissed reminders.');
+  } else if (inputs.dailyUsage === '6-8h' && resource.id === 'forest') {
+    parts.push('Well-suited for 6–8 hour users seeking dedicated pomodoro study blocks and visual commitment tracking.');
+  }
 
   if (inputs.concern) {
     const concernMessages: Partial<Record<Concern, Record<string, string>>> = {
@@ -114,26 +185,75 @@ function generateWhyThisFits(resource: Resource, inputs: FinderInputs): string {
   if (inputs.budgetFreeOnly) {
     const models = Array.isArray(resource.cost.model) ? resource.cost.model : [resource.cost.model];
     if (models.includes('free') || models.includes('open_source')) {
-      parts.push('It\'s completely free — no cost involved.');
+      parts.push("It's 100% free with no hidden paywalls.");
     }
   }
 
   if (inputs.preferOpenSource) {
     const models = Array.isArray(resource.cost.model) ? resource.cost.model : [resource.cost.model];
     if (models.includes('open_source')) {
-      parts.push('The source code is publicly available — you can verify exactly what it does.');
+      parts.push('The source code is publicly verifiable and auditable.');
     }
   }
 
-  return parts.join(' ') || `${resource.name} is a good fit for your needs.`;
+  return parts.join(' ') || `${resource.name} is a strong match for your specified platform and preferences.`;
+}
+
+function generateProblemAddressed(resource: Resource, inputs: FinderInputs): string {
+  if (inputs.concern === 'notifications') {
+    return 'Reduces notification-driven attention fragmenting by muting non-emergency pings.';
+  }
+  if (inputs.concern === 'scrolling') {
+    return 'Interrupts automatic dopamine loops and infinite scrolling through strategic cognitive friction.';
+  }
+  if (inputs.concern === 'sleep') {
+    return 'Automates evening sensory wind-down and shields sleep latency from digital stimulation.';
+  }
+  if (inputs.concern === 'privacy') {
+    return 'Blocks persistent surveillance beacons and commercial profiling that track your online habits.';
+  }
+  return resource.purpose;
+}
+
+function generatePricingNote(resource: Resource): string {
+  const models = Array.isArray(resource.cost.model) ? resource.cost.model : [resource.cost.model];
+  const isFree = models.includes('free') || models.includes('open_source');
+  if (isFree && resource.cost.paywalledFeatures.length === 0) {
+    return '100% Free: Essential features completely free without subscription.';
+  }
+  if (models.includes('freemium')) {
+    return `Freemium: Core basic features are free; ${resource.cost.paywalledFeatures.join(', ')} require paid tier.`;
+  }
+  if (models.includes('paid')) {
+    return `Paid: One-time or subscription fee (${resource.cost.details}).`;
+  }
+  return resource.cost.details;
 }
 
 function generateTradeoffNote(resource: Resource): string {
   const firstLimitation = resource.limitations[0];
   if (firstLimitation) {
-    return `Key limitation: ${firstLimitation}`;
+    return `Important trade-off: ${firstLimitation}`;
   }
-  return 'Review the full tool details for limitations.';
+  return 'Review the full tool details for known limitations.';
+}
+
+function generateAlternativeSuggestion(resource: Resource): string {
+  const alternatives: Record<string, string> = {
+    'forest': 'If you prefer an entirely free, built-in solution without gamification, consider your phone\'s native Screen Time or Digital Wellbeing app timer.',
+    'ios-screen-time': 'If you need strict, unbypassable site scheduling on your laptop, consider LeechBlock NG in your browser.',
+    'android-digital-wellbeing': 'If you need pre-app breathing delays rather than timed shutoffs, pair with one sec.',
+    'one-sec': 'If you need scheduled nighttime blackouts rather than app-open friction, configure native Sleep Focus / Bedtime Mode.',
+    'leechblock-ng': 'If you want complete feed eradication across social networks without configuring custom time rules, use News Feed Eradicator.',
+    'news-feed-eradicator': 'If you want timed access rather than total feed removal, configure LeechBlock NG.',
+    'ios-sleep-focus': 'If you study late on a laptop computer, pair with f.lux to warm your display automatically.',
+    'android-bedtime-mode': 'If you need desktop screen warming alongside mobile grayscale, pair with f.lux for Windows/Mac.',
+    'flux': 'If you also want phone notifications silenced at bedtime, set up native iOS Sleep Focus or Android Bedtime Mode.',
+    'ublock-origin': 'If you also want search queries disconnected from your identity, pair with DuckDuckGo search.',
+    'duckduckgo': 'If you want active in-page tracker and banner blocking across all sites, combine with uBlock Origin.',
+    'signal': 'For daily web browsing privacy, pair Signal with DuckDuckGo and uBlock Origin.',
+  };
+  return alternatives[resource.id] || 'Explore the Explore catalogue to compare alternative tools in this category.';
 }
 
 export function scoreResources(resources: Resource[], inputs: FinderInputs): FinderResult {
@@ -161,6 +281,9 @@ export function scoreResources(resources: Resource[], inputs: FinderInputs): Fin
     // Calculate score
     let score = 0;
     score += inputs.concern ? getConcernMatch(resource, inputs.concern) : 0;
+    score += getDailyUsageBonus(resource, inputs.dailyUsage);
+    score += getInterventionBonus(resource, inputs.interventionType);
+    score += getStudyRequirementBonus(resource, inputs.studyRequirement);
     score += getOpenSourceBonus(resource, inputs.preferOpenSource);
     score += getPrivacyBonus(resource);
 
@@ -168,7 +291,11 @@ export function scoreResources(resources: Resource[], inputs: FinderInputs): Fin
       resource,
       score,
       whyThisFits: generateWhyThisFits(resource, inputs),
+      problemAddressed: generateProblemAddressed(resource, inputs),
+      relevantFeatures: resource.keyFeatures.slice(0, 3),
+      pricingNote: generatePricingNote(resource),
       tradeoffNote: generateTradeoffNote(resource),
+      alternativeSuggestion: generateAlternativeSuggestion(resource),
       excludedReasons: [],
     });
   }
@@ -186,6 +313,9 @@ export function inputsToParams(inputs: FinderInputs): URLSearchParams {
   if (inputs.platforms.length) p.set('platforms', inputs.platforms.join(','));
   if (inputs.budgetFreeOnly) p.set('freeOnly', '1');
   if (inputs.preferOpenSource) p.set('openSource', '1');
+  if (inputs.dailyUsage) p.set('usage', inputs.dailyUsage);
+  if (inputs.interventionType) p.set('intervention', inputs.interventionType);
+  if (inputs.studyRequirement) p.set('study', inputs.studyRequirement);
   return p;
 }
 
@@ -197,6 +327,8 @@ export function paramsToInputs(params: URLSearchParams): FinderInputs {
       : [],
     budgetFreeOnly: params.get('freeOnly') === '1',
     preferOpenSource: params.get('openSource') === '1',
+    dailyUsage: (params.get('usage') as DailyUsage) || '',
+    interventionType: (params.get('intervention') as InterventionType) || '',
+    studyRequirement: (params.get('study') as StudyRequirement) || '',
   };
 }
-

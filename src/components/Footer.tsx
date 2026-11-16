@@ -45,6 +45,7 @@ export function Footer() {
             <h2 className="text-white text-sm font-semibold mb-3 uppercase tracking-wide">Project</h2>
             <ul className="space-y-2 text-sm">
               <li><Link to="/about" className="text-white/60 hover:text-white no-underline transition-colors">About</Link></li>
+              <li><Link to="/research" className="text-white/60 hover:text-white no-underline transition-colors">Student Research & Testing</Link></li>
               <li><Link to="/privacy" className="text-white/60 hover:text-white no-underline transition-colors">Privacy</Link></li>
               <li><Link to="/project-evidence" className="text-white/60 hover:text-white no-underline transition-colors">Project Evidence</Link></li>
             </ul>
