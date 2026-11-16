@@ -36,27 +36,7 @@ export default function About() {
         </ul>
       </section>
 
-      {/* Audience needs placeholder */}
-      <section className="mb-12 bg-amber-50 border border-amber-200 rounded-xl p-6" aria-labelledby="audience-heading">
-        <h2 id="audience-heading" className="text-xl font-semibold text-amber-800 mb-3">Student audience & needs</h2>
-        <p className="text-sm text-amber-700 mb-3">
-          <strong>🔲 Needs student action:</strong> This section is a placeholder. The team should conduct the
-          student needs discussion activity (see <code>/docs/STUDENT_NEEDS_DISCUSSION_TEMPLATE.md</code>)
-          and replace this block with real findings before submission.
-        </p>
-        <div className="bg-white rounded-lg p-4 text-sm text-ink-light space-y-2">
-          <p><strong>Audience:</strong> College students (undergraduate/postgraduate) in a Digital Wellness course.</p>
-          <p><strong>Draft identified needs</strong> (to be confirmed by student discussion activity):</p>
-          <ul className="list-disc list-inside space-y-1 pl-2">
-            <li>Difficulty limiting screen time and social media scrolling</li>
-            <li>Trouble concentrating during study sessions due to notifications</li>
-            <li>Poor pre-sleep device habits affecting sleep quality</li>
-            <li>Privacy concerns about data collection by apps and platforms</li>
-            <li>Difficulty finding trustworthy, clearly-explained tool information</li>
-          </ul>
-          <p className="text-amber-700 text-xs mt-3">Replace this block with real discussion findings before evaluation.</p>
-        </div>
-      </section>
+      
 
       {/* Methodology */}
       <section className="mb-12" aria-labelledby="method-heading">
